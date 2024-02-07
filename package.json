@@ -1,19 +1,19 @@
 {
     "name": "@flowfuse/node-red-dashboard-2-ui-webcam",
     "version": "1.0.0",
-    "description": "A webcam node that integrates with Node-RED Dashboard 2.0",
+    "description": "A Webcam  node that integrates with Node-RED Dashboard 2.0",
     "keywords": [
         "node-red",
         "node-red-dashboard-2"
     ],
     "repository": {
         "type": "git",
-        "url": "https://github.com/flowforge/node-red-dashboard-2-ui-webcam.git"
+        "url": "https://github.com/sumitshinde-84/node-red-dashboard-2-ui-webcam.git"
     },
     "license": "Apache-2.0",
     "author": {
         "name": "Sumit Shinde",
-        "url": "https://github.com/sumitshinde-84"
+        "url": "https://github.com/sumitshinde84"
     },
     "exports": {
         "import": "./resources/ui-webcam.esm.js",
@@ -38,6 +38,7 @@
         "lint:package:fix": "sort-package-json 'package.json'"
     },
     "dependencies": {
+        "to-title-case": "^1.0.0",
         "vue": "^3.3.8",
         "vuex": "^4.1.0"
     },

@@ -1,14 +1,15 @@
 <script type="text/javascript">
     RED.nodes.registerType('ui-webcam', {
         category: RED._('@flowforge/node-red-dashboard/ui-base:ui-base.label.category'),
-        color: '#a6bbcf',
+        color: 'rgb(32 160 170)',
         defaults: {
             name: { value: "" },
             group: { type: 'ui-group', required: true },
         },
         inputs: 1,
         outputs: 1,
-        icon: "file.svg",
+        icon: "font-awesome/fa-camera",
+        paletteLabel: "webcam",
         label: function () {
             return this.name || "ui-webcam";
         },
