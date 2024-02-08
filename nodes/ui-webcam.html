@@ -8,7 +8,7 @@
             width: {
             value: 0,
             validate: function (v) {
-                const width = v || 'auto';
+                const width = v || 0;
                 const currentGroup = $('#node-input-group').val() || this.group;
                 const groupNode = RED.nodes.node(currentGroup);
                 const valid = !groupNode || +width <= +groupNode.width;
@@ -16,7 +16,7 @@
                 return valid;
             }
         },
-        height: { value: 'auto' },
+        height: { value: 0 },
         },
         inputs: 1,
         outputs: 1,
