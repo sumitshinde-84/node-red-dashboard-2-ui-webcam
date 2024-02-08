@@ -4,10 +4,10 @@
             <video ref="video" width="100%" height="100%" playsinline webkit-playsinline muted />
             <canvas ref="canvas" class="canvas" />
             <button v-if="cameraIsOn === false" class="capture-button" @click="captureImage">
-                <img src="https://www.freepnglogos.com/uploads/camera-logo-png/camera-symbol-icon-25.png" height="20" width="20" alt="Capture Image" @click="startWebcam">
+                <img src="../../icon/camera-icon.png" height="20" width="20" alt="Capture Image" @click="startWebcam">
             </button>
             <button v-if="cameraIsOn" class="capture-button" @click="captureImage">
-                <img src="https://www.freepnglogos.com/uploads/camera-logo-png/camera-symbol-icon-25.png" height="20" width="20" alt="Capture Image" @click="captureImage">
+                <img src="../../icon/camera-icon.png" height="20" width="20" alt="Capture Image" @click="captureImage">
             </button>
         </div>
         <select v-if="cameraDevices.length > 1" v-model="selectedDevice" @change="changeCamera">
