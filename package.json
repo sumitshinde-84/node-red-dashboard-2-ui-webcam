@@ -11,10 +11,8 @@
         "url": "https://github.com/sumitshinde-84/node-red-dashboard-2-ui-webcam.git"
     },
     "license": "Apache-2.0",
-    "author": {
-        "name": "Sumit Shinde",
-        "url": "https://github.com/sumitshinde84"
-    },
+    "author": "Sumit Shinde",
+    "contributors": ["Joe Pavitt"],
     "exports": {
         "import": "./resources/ui-webcam.esm.js",
         "require": "./resources/ui-webcam.umd.js"
