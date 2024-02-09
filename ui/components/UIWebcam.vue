@@ -4,16 +4,17 @@
             <video ref="video" width="100%" height="100%" playsinline webkit-playsinline muted />
             <canvas ref="canvas" class="canvas" />
             <button v-if="cameraIsOn === false" class="capture-button" @click="captureImage">
-                <img src="../../icon/camera-icon.png" height="20" width="20" alt="Capture Image" @click="startWebcam">
+                <img src="../assets/camera-icon.png" height="20" width="20" alt="Capture Image" @click="startWebcam">
             </button>
             <button v-if="cameraIsOn" class="capture-button" @click="captureImage">
-                <img src="../../icon/camera-icon.png" height="20" width="20" alt="Capture Image" @click="captureImage">
+                <img src="../assets/camera-icon.png" height="20" width="20" alt="Capture Image" @click="captureImage">
             </button>
         </div>
         <select v-if="cameraDevices.length > 1" v-model="selectedDevice" @change="changeCamera">
             <option v-for="device in cameraDevices" :key="device.deviceId" :value="device.deviceId">{{ device.label }}</option>
             <option value="off">Off Camera</option>
         </select>
+        {{ $refs.video?.readyState }}
     </div>
 </template>
 
@@ -138,40 +139,46 @@ export default {
 
 <style scoped>
 .ui-webcam-wrapper {
-  position: relative;
+    position: relative;
 }
 
 .video-wrapper {
-  background: black;
-  width: auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
+    background: black;
+    width: auto;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
 }
 
 .canvas {
-  z-index: 1;
-  position: absolute;
-  width: 100%;
-  height: 100%;
+    z-index: 1;
+    position: absolute;
+    width: 100%;
+    height: 100%;
 }
 
 .capture-button {
-  position: absolute;
-  margin-left: auto;
-  z-index: 2;
-  right: auto;
-  background: rgb(255, 255, 255);
-  border: none;
-  padding: 10px;
-  border-radius: 50%;
-  cursor: pointer;
-  box-shadow: rgba(0, 0, 0, 0.1) 0px 2px 4px;
+    position: absolute;
+    margin-left: auto;
+    z-index: 2;
+    right: auto;
+    background: rgb(255, 255, 255);
+    border: none;
+    padding: 10px;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 2px 4px;
+    display: flex;
+}
+
+.capture-button:hover {
+    background-color: rgb(var(--v-theme-primary));
 }
 
 .capture-button.v-if-cameraIsOn {
-  margin-top: 60%;
+    margin-top: 60%;
 }
 </style>
