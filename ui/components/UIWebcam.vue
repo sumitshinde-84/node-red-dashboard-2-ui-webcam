@@ -53,6 +53,14 @@ export default {
             }
         }
     },
+    mounted () {
+        this.$socket.on('msg-input:' + this.id, async (msg) => {
+            if (msg.payload === 'capture') {
+                await this.startWebcam()
+                await this.captureImage()
+            }
+        })
+    },
     beforeUnmount () {
         this.$socket?.off('widget-load:' + this.id)
         this.$socket?.off('msg-input:' + this.id)
