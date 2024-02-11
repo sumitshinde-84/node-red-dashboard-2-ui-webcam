@@ -3,17 +3,25 @@
         <div class="video-wrapper">
             <video ref="video" width="100%" height="100%" playsinline webkit-playsinline muted />
             <canvas ref="canvas" class="canvas" />
-            <button v-if="cameraIsOn === false" class="capture-button" @click="captureImage">
-                <img src="../../icon/camera-icon.png" height="20" width="20" alt="Capture Image" @click="startWebcam">
+            <button v-if="cameraIsOn === false" class="button power-button" @click="startWebcam">
+                <img class="icon" src="../../assets/camera-on.png" height="30px" width="30px" alt="Capture Image" @click="startWebcam">
             </button>
-            <button v-if="cameraIsOn" class="capture-button" @click="captureImage">
-                <img src="../../icon/camera-icon.png" height="20" width="20" alt="Capture Image" @click="captureImage">
+            <button v-if="cameraIsOn" class="button capture-button" @click="captureImage">
+                <img class="icon" src="../../assets/camera-icon.png" height="30px" width="30px" alt="Capture Image">
             </button>
+            <div v-if="cameraIsOn" class="ellipsis" @click="toggleDropdown">
+                <span />
+                <span />
+                <span />
+            </div>
         </div>
-        <select v-if="cameraDevices.length > 1" v-model="selectedDevice" @change="changeCamera">
-            <option v-for="device in cameraDevices" :key="device.deviceId" :value="device.deviceId">{{ device.label }}</option>
-            <option value="off">Off Camera</option>
-        </select>
+        <div v-if="cameraIsOn" class="dropdown" :class="{ 'open': dropdownOpen }">
+            <ul>
+                <li @click="selectCamera('off')">Off Camera</li>
+                <li class="group-label">Select camera</li>
+                <li v-for="device in cameraDevices" :key="device.deviceId" @click="selectCamera(device.deviceId)">{{ device.label }}</li>
+            </ul>
+        </div>
     </div>
 </template>
 
@@ -33,7 +41,8 @@ export default {
             imageData: null,
             cameraDevices: [],
             selectedDevice: null,
-            cameraIsOn: false
+            cameraIsOn: false,
+            dropdownOpen: false
         }
     },
     computed: {
@@ -44,28 +53,29 @@ export default {
             }
         }
     },
-    mounted () {},
     beforeUnmount () {
         this.$socket?.off('widget-load:' + this.id)
         this.$socket?.off('msg-input:' + this.id)
         this.stopWebcam()
     },
     methods: {
-        async startWebcam () {
-            try {
-                const devices = await navigator.mediaDevices.enumerateDevices()
-                const videoDevices = devices.filter(device => device.kind === 'videoinput')
 
-                if (videoDevices.length > 0) {
-                    this.cameraIsOn = true
-                    this.cameraDevices = videoDevices
-                    this.selectedDevice = videoDevices[0].deviceId // Select the first camera by default
-                    await this.openCamera()
-                } else {
-                    console.error('No video input devices found.')
+        async startWebcam () {
+            if (!this.cameraIsOn) {
+                try {
+                    const devices = await navigator.mediaDevices.enumerateDevices()
+                    const videoDevices = devices.filter(device => device.kind === 'videoinput')
+
+                    if (videoDevices.length > 0) {
+                        this.cameraDevices = videoDevices
+                        this.selectedDevice = videoDevices[0].deviceId // Select the first camera by default
+                        await this.openCamera()
+                    } else {
+                        console.error('No video input devices found.')
+                    }
+                } catch (error) {
+                    console.error('Error accessing media devices:', error)
                 }
-            } catch (error) {
-                console.error('Error accessing media devices:', error)
             }
         },
         async openCamera () {
@@ -82,6 +92,7 @@ export default {
                     if (video && video instanceof HTMLVideoElement) {
                         video.srcObject = stream
                         video.play()
+                        this.cameraIsOn = true
                     } else {
                         console.error('Video element not found or not an instance of HTMLVideoElement.')
                     }
@@ -90,7 +101,6 @@ export default {
                 }
             }
         },
-
         stopWebcam () {
             const tracks = this.$refs.video.srcObject?.getTracks()
             if (tracks) {
@@ -131,6 +141,14 @@ export default {
         async changeCamera () {
             this.stopWebcam()
             await this.openCamera()
+        },
+        toggleDropdown () {
+            this.dropdownOpen = !this.dropdownOpen
+        },
+        selectCamera (deviceId) {
+            this.selectedDevice = deviceId
+            this.toggleDropdown()
+            this.changeCamera()
         }
     }
 }
@@ -138,40 +156,125 @@ export default {
 
 <style scoped>
 .ui-webcam-wrapper {
-  position: relative;
+    position: relative;
+    border-radius: 5px;
+    box-shadow: rgba(0, 0, 0, 0.9) 0px 2px 4px;
 }
 
 .video-wrapper {
-  background: black;
-  width: auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
+    background: black;
+    width: auto;
+    height: 100%;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    -webkit-transform: scaleX(-1);
+    transform: scaleX(-1);
 }
 
 .canvas {
-  z-index: 1;
-  position: absolute;
-  width: 100%;
-  height: 100%;
+    z-index: 1;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.button {
+    position: absolute;
+    margin-left: auto;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    right: auto;
+    background: rgb(255, 255, 255);
+    border: none;
+    padding: 10px;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 2px 4px;
+}
+
+.dropdown ul li.group-label {
+    padding: 5px 10px;
+    cursor: default;
+    font-weight: bold;
+    color: #555;
+}
+
+.dropdown ul li.group-label:hover {
+    background-color: white;
+    padding: 5px 10px;
+    cursor: default;
+    font-weight: bold;
+    color: #555;
+}
+
+.icon .capture-button{
+    width: 30px;
+    height: 30px;
+}
+
+.button:hover {
+    background-color: rgb(var(--v-theme-primary));
 }
 
 .capture-button {
-  position: absolute;
-  margin-left: auto;
-  z-index: 2;
-  right: auto;
-  background: rgb(255, 255, 255);
-  border: none;
-  padding: 10px;
-  border-radius: 50%;
-  cursor: pointer;
-  box-shadow: rgba(0, 0, 0, 0.1) 0px 2px 4px;
+    margin-top: 60%;
 }
 
-.capture-button.v-if-cameraIsOn {
-  margin-top: 60%;
+.ellipsis {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    cursor: pointer;
+    z-index: 2;
+    padding: 5px;
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 2px 4px;
+}
+
+.ellipsis span {
+    display: block;
+    width: 4px;
+    height: 4px;
+    background-color: #fff;
+    border-radius: 50%;
+    margin-bottom: 3px;
+}
+
+.dropdown {
+    position: absolute;
+    top: 40px;
+    right: 10px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    z-index: 2;
+    display: none;
+}
+
+.dropdown ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.dropdown ul li {
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+.dropdown ul li:hover {
+    background-color: rgb(var(--v-theme-primary));
+    color:white;
+}
+
+.dropdown.open {
+    display: block;
 }
 </style>
