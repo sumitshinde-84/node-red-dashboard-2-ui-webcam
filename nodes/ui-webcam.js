@@ -13,7 +13,6 @@ module.exports = function (RED) {
         const evts = {
             onAction: true,
             onInput: function (msg, send, done) {
-                base.stores.data.save(node.id, msg)
                 send(msg)
             }
 
