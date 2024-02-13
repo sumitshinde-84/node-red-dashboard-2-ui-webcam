@@ -15,7 +15,7 @@ module.exports = function (RED) {
             onInput: function (msg, send, done) {
                 base.stores.data.save(node.id, msg)
                 send(msg)
-            },
+            }
 
         }
 

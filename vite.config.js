@@ -4,7 +4,6 @@ import vue from '@vitejs/plugin-vue'
 import { defineConfig } from 'vite'
 import cssInjectedByJsPlugin from 'vite-plugin-css-injected-by-js'
 
-
 const LIBRARY_NAME = 'ui-webcam'
 
 // https://vitejs.dev/config/
@@ -27,7 +26,7 @@ export default defineConfig({
 
             external: ['vue', 'vuex'],
             output: {
-               
+
                 globals: {
                     vue: 'Vue',
                     vuex: 'vuex'
