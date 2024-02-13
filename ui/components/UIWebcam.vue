@@ -17,7 +17,7 @@
         </div>
         <div v-if="cameraIsOn" class="dropdown" :class="{ 'open': dropdownOpen }">
             <ul>
-                <li @click="selectCamera('off')">Off Camera</li>
+                <li @click="selectCamera('off')">Turn Camera Off</li>
                 <li class="group-label">Select camera</li>
                 <li v-for="device in cameraDevices" :key="device.deviceId" @click="selectCamera(device.deviceId)">{{ device.label }}</li>
             </ul>
@@ -213,6 +213,22 @@ export default {
     cursor: default;
     font-weight: bold;
     color: #555;
+    font-size: 0.75rem;
+    display: flex;
+    position: relative;
+    white-space: nowrap;
+    gap: 12px;
+    background-color: rgb(var(--v-theme-background));
+}
+
+.dropdown ul li.group-label:after {
+    content:" ";
+    display: block;
+    height: 2px;
+    flex-grow: 1;
+    width: 100%;
+    margin-top: 9px;
+    background: rgb(var(--v-theme-group-outline));
 }
 
 .dropdown ul li.group-label:hover {
