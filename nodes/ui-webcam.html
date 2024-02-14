@@ -6,18 +6,18 @@
             name: { value: "" },
             group: { type: 'ui-group', required: true },
             width: {
-            value: 0,
-            validate: function (v) {
-                const width = v || 0;
-                const currentGroup = $('#node-input-group').val() || this.group;
-                const groupNode = RED.nodes.node(currentGroup);
-                const valid = !groupNode || +width <= +groupNode.width;
-                $('#node-input-size').toggleClass('input-error', !valid);
-                return valid;
-            }
-        },
-        height: { value: 0 },
-        passthru: { value: false },
+                value: 0,
+                validate: function (v) {
+                    const width = v || 0;
+                    const currentGroup = $('#node-input-group').val() || this.group;
+                    const groupNode = RED.nodes.node(currentGroup);
+                    const valid = !groupNode || +width <= +groupNode.width;
+                    $('#node-input-size').toggleClass('input-error', !valid);
+                    return valid;
+                }
+            },
+            height: { value: 0 },
+            passthru: { value: false },
         },
         inputs: 1,
         outputs: 1,
