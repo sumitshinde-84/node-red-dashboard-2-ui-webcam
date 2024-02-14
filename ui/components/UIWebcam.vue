@@ -4,10 +4,10 @@
             <video ref="video" width="100%" height="100%" playsinline webkit-playsinline muted />
             <canvas ref="canvas" class="canvas" />
             <button v-if="cameraIsOn === false" class="button power-button" @click="startWebcam">
-                <img class="icon" src="../../assets/camera-on.png" height="30px" width="30px" alt="Capture Image" @click="startWebcam">
+                <img class="icon" src="../assets/camera-on.png" height="30px" width="30px" alt="Capture Image" @click="startWebcam">
             </button>
             <button v-if="cameraIsOn" class="button capture-button" @click="captureImage">
-                <img class="icon" src="../../assets/camera-icon.png" height="30px" width="30px" alt="Capture Image">
+                <img class="icon" src="../assets/camera-icon.png" height="30px" width="30px" alt="Capture Image">
             </button>
             <div v-if="cameraIsOn" class="ellipsis" @click="toggleDropdown">
                 <span />

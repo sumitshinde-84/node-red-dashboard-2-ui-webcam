@@ -1,5 +1,5 @@
 {
-    "name": "@flowfuse/node-red-dashboard-2-ui-webcam",
+    "name": "@sumit_shinde_84/node-red-dashboard-2-ui-webcam",
     "version": "1.0.0",
     "description": "A Webcam  node that integrates with Node-RED Dashboard 2.0",
     "keywords": [
@@ -12,7 +12,9 @@
     },
     "license": "Apache-2.0",
     "author": "Sumit Shinde",
-    "contributors": ["Joe Pavitt"],
+    "contributors": [
+        "Joe Pavitt"
+    ],
     "exports": {
         "import": "./resources/ui-webcam.esm.js",
         "require": "./resources/ui-webcam.umd.js"
