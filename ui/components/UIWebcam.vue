@@ -7,7 +7,7 @@
                 <img class="icon" src="../assets/camera-on.png" height="30px" width="30px" alt="Capture Image" @click="startWebcam">
             </button>
             <button v-if="cameraIsOn" class="button capture-button" @click="captureImage">
-                <img class="icon" src="../assets/camera-icon.png" height="30px" width="30px" alt="Capture Image">
+                <img class="icon" src="../assets/camera-icon.png" height="25px" width="25px" alt="Capture Image">
             </button>
             <div v-if="cameraIsOn" class="ellipsis" @click="toggleDropdown">
                 <span />
