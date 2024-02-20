@@ -1,9 +1,9 @@
 Node-RED Dashboard 2.0 Webcam Widget
 =======================
-<p align="center">
-  <img src="https://github.com/sumitshinde-84/node-red-dashboard-2-ui-webcam/assets/110285294/7f1d2ee2-add5-4405-ae5e-a1b86da13a4e" alt="HOME13" width="400" />
-  <img src="https://github.com/sumitshinde-84/node-red-dashboard-2-ui-webcam/assets/110285294/be25b4e6-693b-445f-aa65-3f48da7fc367" alt="FlowFuse_Flow12" width="400" />
-</p>
+
+![](https://github.com/sumitshinde-84/node-red-dashboard-2-ui-webcam/assets/110285294/7f1d2ee2-add5-4405-ae5e-a1b86da13a4e)
+![](https://github.com/sumitshinde-84/node-red-dashboard-2-ui-webcam/assets/110285294/be25b4e6-693b-445f-aa65-3f48da7fc367) 
+
 The Node-RED Dashboard 2.0 Webcam Widget is a UI widget node designed to facilitate image capture directly from the Dashboard 2.0 interface. This widget enables users to capture images from their device's webcam seamlessly within Node-RED.
 
 ## Installation:
