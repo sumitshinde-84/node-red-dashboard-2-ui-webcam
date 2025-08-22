@@ -18,13 +18,16 @@ Ensure that you have previously installed Dashboard 2.0 before proceeding with t
   ```
   npm i @sumit_shinde_84/node-red-dashboard-2-ui-webcam
   ```
-## Usage
+### Usage
 
 The ui-webcam node offers the following functionalities:
-- Live Image Display: Renders a live image feed from the device's webcam within the Dashboard 2.0 interface.
-- Image Capture: Users can click a designated button to capture an image, which is then transmitted by the node as a Base64 string containing the image in PNG format.
-- Automated Image Capture: If a `msg.payload` is passed to the ui-webcam node with the  `capture` string , the node automatically captures an image without requiring user interaction.
-- Camera Selection: Users have the option to select a different camera by clicking on the three-dot icon located in the top-right corner and choosing their preferred camera from the options.
+* **Live Image Display:** Renders a live image feed from the device's webcam within the Dashboard 2.0 interface.
+* **Image Capture:** Users can click a designated button to capture an image, which is then transmitted by the node as a Base64 string containing the image in PNG format.
+* **Automated Image Capture:** If a `msg.payload` is passed to the ui-webcam node with the string `capture`, the node automatically captures an image without requiring user interaction.
+* **Automated Camera Control:** The widget can be turned on or off programmatically by sending a `msg.payload` to the node:
+    * To **turn the camera on**, send a `msg.payload` with the string **`on`**.
+    * To **turn the camera off**, send a `msg.payload` with the string **`off`**.
+* **Camera Selection:** Users have the option to select a different camera by clicking on the three-dot icon located in the top-right corner and choosing their preferred camera from the options.
 
 ## Browser Support
 

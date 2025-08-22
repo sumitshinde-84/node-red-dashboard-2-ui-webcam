@@ -54,12 +54,18 @@ export default {
         }
     },
     mounted () {
-        this.$socket.on('msg-input:' + this.id, async (msg) => {
-            if (msg.payload === 'capture') {
+    this.$socket.on('msg-input:' + this.id, async (msg) => {
+        if (msg.payload === 'capture') {
+            if (!this.cameraIsOn) {
                 await this.startWebcam()
-                await this.captureImage()
             }
-        })
+            await this.captureImage()
+        } else if (msg.payload === 'on') {
+            await this.startWebcam()
+        } else if (msg.payload === 'off') {
+            this.stopWebcam()
+        }
+    })
     },
     beforeUnmount () {
         this.$socket?.off('widget-load:' + this.id)
@@ -110,10 +116,13 @@ export default {
             }
         },
         stopWebcam () {
-            const tracks = this.$refs.video.srcObject?.getTracks()
-            if (tracks) {
+            const video = this.$refs.video
+            if (video && video.srcObject) {
+                const tracks = video.srcObject.getTracks()
                 tracks.forEach(track => track.stop())
+                video.srcObject = null
             }
+            this.cameraIsOn = false
         },
         captureImage () {
             const video = this.$refs.video
