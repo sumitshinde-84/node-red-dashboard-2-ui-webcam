@@ -1,6 +1,6 @@
 {
     "name": "@sumit_shinde_84/node-red-dashboard-2-ui-webcam",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "description": "The ui-webcam node for Node-RED Dashboard 2.0 enables users to integrate webcam functionality into Node-RED Dashboard 2.0. It allows users to capture images, select different cameras, and control webcam features through an intuitive user interface within the Node-RED Dashboard.",
     "keywords": [
         "node-red",
@@ -38,6 +38,7 @@
         "lint:package:fix": "sort-package-json 'package.json'"
     },
     "dependencies": {
+        "jsqr": "^1.4.0",
         "vue": "^3.3.8",
         "vuex": "^4.1.0"
     },

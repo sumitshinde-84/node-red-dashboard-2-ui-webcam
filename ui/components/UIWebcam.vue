@@ -27,6 +27,7 @@
 
 <script>
 import { mapState } from 'vuex'
+import jsQR from 'jsqr'
 
 export default {
     name: 'UIWebcam',
@@ -42,7 +43,10 @@ export default {
             cameraDevices: [],
             selectedDevice: null,
             cameraIsOn: false,
-            dropdownOpen: false
+            dropdownOpen: false,
+            scanningInterval: null,
+            lastQRCode: null,
+            qrDetectionEnabled: true
         }
     },
     computed: {
@@ -105,8 +109,18 @@ export default {
 
                     if (video && video instanceof HTMLVideoElement) {
                         video.srcObject = stream
-                        video.play()
+                        await video.play()
                         this.cameraIsOn = true
+                        // Start QR scanning once video is ready
+                        if (video.readyState >= video.HAVE_METADATA) {
+                            // Video is already ready, start scanning immediately
+                            this.startQRScanning()
+                        } else {
+                            // Wait for video to be ready before starting QR scanning
+                            video.addEventListener('loadedmetadata', () => {
+                                this.startQRScanning()
+                            }, { once: true })
+                        }
                     } else {
                         console.error('Video element not found or not an instance of HTMLVideoElement.')
                     }
@@ -123,8 +137,9 @@ export default {
                 video.srcObject = null
             }
             this.cameraIsOn = false
+            this.stopQRScanning()
         },
-        captureImage () {
+        captureImage (isQRDetection = false) {
             const video = this.$refs.video
             const canvas = this.$refs.canvas
             const context = canvas.getContext('2d')
@@ -140,7 +155,14 @@ export default {
 
                 this.imageData = canvas.toDataURL('image/png')
 
-                this.send(this.imageData)
+                // Send image with capture type
+                const payload = {
+                    image: this.imageData,
+                    captureType: isQRDetection ? 'qr-detection' : 'manual',
+                    timestamp: new Date().toISOString()
+                }
+
+                this.send(payload)
 
                 // Display the captured image for 0.5 seconds
                 setTimeout(() => {
@@ -165,7 +187,69 @@ export default {
         selectCamera (deviceId) {
             this.selectedDevice = deviceId
             this.toggleDropdown()
-            this.changeCamera()
+            if (deviceId === 'off') {
+                this.stopWebcam()
+            } else {
+                this.changeCamera()
+            }
+        },
+        startQRScanning () {
+            console.log('Starting QR scanning...')
+            if (this.scanningInterval) {
+                clearInterval(this.scanningInterval)
+            }
+            
+            // Scan every 250ms instead of 100ms to reduce CPU load
+            this.scanningInterval = setInterval(() => {
+                this.scanForQRCode()
+            }, 250)
+            console.log('QR scanning interval started')
+        },
+        stopQRScanning () {
+            if (this.scanningInterval) {
+                clearInterval(this.scanningInterval)
+                this.scanningInterval = null
+            }
+        },
+        scanForQRCode () {
+            if (!this.qrDetectionEnabled || !this.cameraIsOn) {
+                console.log('Scanning skipped - QR detection:', this.qrDetectionEnabled, 'Camera on:', this.cameraIsOn)
+                return
+            }
+            
+            try {
+                const video = this.$refs.video
+                const canvas = document.createElement('canvas')
+                const context = canvas.getContext('2d')
+                
+                if (video && video.readyState === video.HAVE_ENOUGH_DATA) {
+                    canvas.width = video.videoWidth
+                    canvas.height = video.videoHeight
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height)
+                    
+                    const imageData = context.getImageData(0, 0, canvas.width, canvas.height)
+                    const code = jsQR(imageData.data, imageData.width, imageData.height)
+                    
+                    if (code && code.data) {
+                        console.log('QR Code found:', code.data, 'Last QR:', this.lastQRCode)
+                        if (code.data !== this.lastQRCode) {
+                            this.lastQRCode = code.data
+                            console.log('QR Code detected, capturing image')
+                            // Capture image when QR code is detected (pass true for QR detection)
+                            this.captureImage(true)
+                            
+                            setTimeout(() => {
+                                console.log('Resetting QR code cooldown')
+                                this.lastQRCode = null
+                            }, 2000)
+                        }
+                    }
+                } else {
+                    console.log('Video not ready for scanning')
+                }
+            } catch (error) {
+                console.error('Error scanning for QR code:', error)
+            }
         }
     }
 }
