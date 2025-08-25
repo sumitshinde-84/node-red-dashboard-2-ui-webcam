@@ -18,16 +18,50 @@ Ensure that you have previously installed Dashboard 2.0 before proceeding with t
   ```
   npm i @sumit_shinde_84/node-red-dashboard-2-ui-webcam
   ```
-### Usage
 
-The ui-webcam node offers the following functionalities:
-* **Live Image Display:** Renders a live image feed from the device's webcam within the Dashboard 2.0 interface.
-* **Image Capture:** Users can click a designated button to capture an image, which is then transmitted by the node as a Base64 string containing the image in PNG format.
-* **Automated Image Capture:** If a `msg.payload` is passed to the ui-webcam node with the string `capture`, the node automatically captures an image without requiring user interaction.
-* **Automated Camera Control:** The widget can be turned on or off programmatically by sending a `msg.payload` to the node:
-    * To **turn the camera on**, send a `msg.payload` with the string **`on`**.
-    * To **turn the camera off**, send a `msg.payload` with the string **`off`**.
-* **Camera Selection:** Users have the option to select a different camera by clicking on the three-dot icon located in the top-right corner and choosing their preferred camera from the options.
+## Usage
+
+The **ui-webcam** node provides the following functionalities:
+
+* **Live Image Display:**
+  Displays a live video feed from the device’s webcam in the Dashboard 2.0 interface.
+
+* **Image Capture:**
+  Users can click a capture button to take a snapshot.
+  The captured image is sent as a **Base64-encoded PNG** string with the following format:
+
+  ```json
+  {
+    "image": "data:image/png;base64,iVBORw0K... (truncated)",
+    "captureType": "manual",
+    "timestamp": "2025-08-25T14:25:05.993Z"
+  }
+  ```
+
+* **Automated Image Capture:**
+  Sending a `msg.payload` with the string `capture` will trigger an automatic image capture without user interaction.
+  The output format will also include `"captureType": "manual"` since it is equivalent to a normal capture.
+
+* **Automated Camera Control:**
+  The widget can be turned on or off programmatically by sending a `msg.payload`:
+
+  * To **turn on** the camera: `msg.payload = "on"`
+  * To **turn off** the camera: `msg.payload = "off"`
+
+* **Camera Selection:**
+  Users can select a different camera by clicking the three-dot icon in the widget and choosing from available devices.
+
+* **QR Code Auto-Detection (New):**
+  When the camera feed contains a QR code, the widget can automatically detect and capture the image.
+  The captured image will include `"captureType": "qr-detection"`:
+
+  ```json
+  {
+    "image": "data:image/png;base64,iVBORw0K... (truncated)",
+    "captureType": "qr-detection",
+    "timestamp": "2025-08-25T14:25:05.993Z"
+  }
+  ```
 
 ## Browser Support
 
