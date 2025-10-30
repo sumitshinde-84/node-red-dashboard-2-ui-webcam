@@ -1,6 +1,6 @@
 <template>
     <div class="ui-webcam-wrapper">
-        <div class="video-wrapper">
+        <div class="video-wrapper" :class="{ 'mirrored': isFrontCamera }">
             <video ref="video" width="100%" height="100%" playsinline webkit-playsinline muted />
             <canvas ref="canvas" class="canvas" />
             <button v-if="cameraIsOn === false" class="button power-button" @click="startWebcam">
@@ -46,7 +46,8 @@ export default {
             dropdownOpen: false,
             scanningInterval: null,
             lastQRCode: null,
-            qrDetectionEnabled: true
+            qrDetectionEnabled: true,
+            isFrontCamera: true
         }
     },
     computed: {
@@ -106,6 +107,14 @@ export default {
 
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia(constraints)
+
+                    // Check camera facing mode
+                    const videoTracks = stream.getVideoTracks()
+                    if (videoTracks.length > 0) {
+                        const track = videoTracks[0]
+                        const settings = track.getSettings()
+                        this.isFrontCamera = settings.facingMode !== 'environment'
+                    }
 
                     if (video && video instanceof HTMLVideoElement) {
                         video.srcObject = stream
@@ -272,6 +281,9 @@ export default {
     justify-content: center;
     position: relative;
     overflow: hidden;
+}
+
+.video-wrapper.mirrored {
     -webkit-transform: scaleX(-1);
     transform: scaleX(-1);
 }
