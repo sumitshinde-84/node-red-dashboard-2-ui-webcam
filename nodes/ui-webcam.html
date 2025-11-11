@@ -17,7 +17,11 @@
                 }
             },
             height: { value: 0 },
-            passthru: { value: false }
+            passthru: { value: false },
+            qrDetection: { value: false },
+            imageWidth: { value: 640 },
+            imageHeight: { value: 480 },
+            imageQuality: { value: 0.8 }
         },
         inputs: 1,
         outputs: 1,
@@ -51,8 +55,78 @@
         <input type="hidden" id="node-input-height">
         <button class="editor-button" id="node-input-size"></button>
     </div>
+    <div class="form-row">
+        <label for="node-input-qrDetection"><i class="fa fa-qrcode"></i> QR Detection</label>
+        <input type="checkbox" id="node-input-qrDetection" style="display: inline-block; width: auto; vertical-align: top;">
+        <label for="node-input-qrDetection" style="width: 70%;">Enable automatic QR code detection</label>
+    </div>
+    <div class="form-row">
+        <label for="node-input-imageWidth"><i class="fa fa-arrows-h"></i> Image Width</label>
+        <input type="number" id="node-input-imageWidth" placeholder="640" min="160" max="1920">
+        <label for="node-input-imageWidth" style="width: 70%; margin-left: 105px;">Capture image width in pixels (default: 640)</label>
+    </div>
+    <div class="form-row">
+        <label for="node-input-imageHeight"><i class="fa fa-arrows-v"></i> Image Height</label>
+        <input type="number" id="node-input-imageHeight" placeholder="480" min="120" max="1080">
+        <label for="node-input-imageHeight" style="width: 70%; margin-left: 105px;">Capture image height in pixels (default: 480)</label>
+    </div>
+    <div class="form-row">
+        <label for="node-input-imageQuality"><i class="fa fa-sliders"></i> Image Quality</label>
+        <input type="number" id="node-input-imageQuality" placeholder="0.8" min="0.1" max="1.0" step="0.1">
+        <label for="node-input-imageQuality" style="width: 70%; margin-left: 105px;">JPEG quality (0.1-1.0, default: 0.8)</label>
+    </div>
 </script>
 
 <script type="text/html" data-help-name="ui-webcam">
-    <p>A webcam node that integrates with dashboard 2.0</p>
+    <p>A webcam node that integrates with Dashboard 2.0. Provides webcam capture, camera selection, and optional QR code detection.</p>
+
+    <h3>Features</h3>
+    <ul>
+        <li>Capture images from webcam</li>
+        <li>Select from available cameras</li>
+        <li>Optional automatic QR code detection</li>
+        <li>Configurable image size and quality to optimize WebSocket transmission</li>
+    </ul>
+
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt>Image Width/Height</dt>
+        <dd>Set the dimensions for captured images. Smaller sizes reduce data transmission. Default: 640x480</dd>
+        <dt>Image Quality</dt>
+        <dd>JPEG quality from 0.1 to 1.0. Lower values create smaller files. Default: 0.8</dd>
+        <dt>QR Detection</dt>
+        <dd>Enable automatic QR code detection and capture</dd>
+    </dl>
+
+    <h3>Important Notes</h3>
+    <p><strong>WebSocket Limits:</strong> Dashboard 2.0 has a default message size limit of 1MB. Keep image dimensions reasonable (e.g., 640x480 or 800x600) to avoid disconnections. For larger images, increase <code>maxHttpBufferSize</code> in settings.js.</p>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">string</span></dt>
+        <dd>
+            <ul>
+                <li><code>"capture"</code> - Capture an image</li>
+                <li><code>"on"</code> - Turn camera on</li>
+                <li><code>"off"</code> - Turn camera off</li>
+            </ul>
+        </dd>
+    </dl>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">object</span></dt>
+        <dd>
+            <ul>
+                <li><code>image</code> - Binary Buffer containing JPEG image data</li>
+                <li><code>captureType</code> - "manual" or "qr-detection"</li>
+                <li><code>timestamp</code> - ISO timestamp of capture</li>
+                <li><code>mimeType</code> - Image MIME type (e.g., "image/jpeg")</li>
+                <li><code>sizeBytes</code> - Image size in bytes</li>
+            </ul>
+        </dd>
+    </dl>
+
+    <h3>Attribution</h3>
+    <p>Uses <a href="https://github.com/cozmo/jsQR">jsQR</a> library for QR code detection (Apache-2.0 license)</p>
 </script>

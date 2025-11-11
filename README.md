@@ -28,13 +28,31 @@ The **ui-webcam** node provides the following functionalities:
 
 * **Image Capture:**
   Users can click a capture button to take a snapshot.
-  The captured image is sent as a **Base64-encoded PNG** string with the following format:
+  The captured image is sent as a **Node.js Buffer** object containing JPEG binary data with the following format:
 
   ```json
   {
-    "image": "data:image/png;base64,iVBORw0K... (truncated)",
+    "image": <Buffer ff d8 ff e0 00 10 4a 46 49 46 ...>,
     "captureType": "manual",
-    "timestamp": "2025-08-25T14:25:05.993Z"
+    "timestamp": "2025-08-25T14:25:05.993Z",
+    "mimeType": "image/jpeg",
+    "sizeBytes": 45678
+  }
+  ```
+
+* **Image Size Configuration:**
+  Configure image dimensions and quality to optimize WebSocket transmission:
+  * **Image Width/Height**: Set capture dimensions (default: 640x480). Smaller sizes reduce data transmission.
+  * **Image Quality**: JPEG quality from 0.1 to 1.0 (default: 0.8). Lower values create smaller files.
+
+  **Important**: Dashboard 2.0 has a default WebSocket message size limit of **1MB**. Keep image dimensions reasonable to avoid disconnections. For larger images, increase `maxHttpBufferSize` in your Node-RED `settings.js`:
+
+  ```javascript
+  ui: {
+      path: "/dashboard",
+      dashboard: {
+          maxHttpBufferSize: 1e7  // 10MB example
+      }
   }
   ```
 
@@ -51,15 +69,20 @@ The **ui-webcam** node provides the following functionalities:
 * **Camera Selection:**
   Users can select a different camera by clicking the three-dot icon in the widget and choosing from available devices.
 
-* **QR Code Auto-Detection (New):**
-  When the camera feed contains a QR code, the widget can automatically detect and capture the image.
+* **Mirror Image:**
+  The camera view can be mirrored horizontally using the "Mirror Image" option in the three-dot menu. Front-facing cameras (on mobile devices) are automatically mirrored for a natural viewing experience, but this can be toggled on or off manually.
+
+* **QR Code Auto-Detection:**
+  When QR Detection is enabled in the node configuration, the widget can automatically detect and capture images when a QR code appears in the camera feed.
   The captured image will include `"captureType": "qr-detection"`:
 
   ```json
   {
-    "image": "data:image/png;base64,iVBORw0K... (truncated)",
+    "image": <Buffer ff d8 ff e0 00 10 4a 46 49 46 ...>,
     "captureType": "qr-detection",
-    "timestamp": "2025-08-25T14:25:05.993Z"
+    "timestamp": "2025-08-25T14:25:05.993Z",
+    "mimeType": "image/jpeg",
+    "sizeBytes": 45678
   }
   ```
 
@@ -74,4 +97,8 @@ use HTTPS otherwise the browser will block access to the webcam.
 
 Before the webcam can be activated, the browser will ask the user's permission for
 the page to access the device. The node cannot capture images until the user
-has given their permission. 
+has given their permission.
+
+## License
+
+Apache-2.0 
