@@ -3,8 +3,8 @@
         <div class="video-wrapper" :class="{ 'mirrored': shouldMirror }">
             <video ref="video" width="100%" height="100%" playsinline webkit-playsinline muted />
             <canvas ref="canvas" class="canvas" />
-            <button v-if="cameraIsOn === false" class="button power-button" @click="startWebcam">
-                <img class="icon" src="../assets/camera-on.png" height="30px" width="30px" alt="Capture Image" @click="startWebcam">
+            <button v-if="cameraIsOn === false" class="button power-button" :disabled="isStarting" @click="startWebcam">
+                <img class="icon" src="../assets/camera-on.png" height="30px" width="30px" alt="Turn camera on">
             </button>
             <button v-if="cameraIsOn" class="button capture-button" @click="captureImage(false)">
                 <img class="icon" src="../assets/camera-icon.png" height="25px" width="25px" alt="Capture Image">
@@ -14,6 +14,9 @@
                 <span />
                 <span />
             </div>
+        </div>
+        <div v-if="!cameraIsOn && (statusMessage || errorMessage)" class="status-message" :class="{ 'is-error': !!errorMessage }">
+            {{ errorMessage || statusMessage }}
         </div>
         <div v-if="cameraIsOn" class="dropdown" :class="{ 'open': dropdownOpen }">
             <ul>
@@ -51,7 +54,9 @@ export default {
             lastQRCode: null,
             isFrontCamera: true,
             manualMirror: false,
-            errorMessage: null
+            errorMessage: null,
+            statusMessage: null,
+            isStarting: false
         }
     },
     computed: {
@@ -126,132 +131,133 @@ export default {
     methods: {
 
         async startWebcam () {
-            if (!this.cameraIsOn) {
-                try {
-                    // First, request permission by opening any camera
-                    // This is required to get proper device labels
-                    const permissionStream = await navigator.mediaDevices.getUserMedia({ video: true })
+            if (this.cameraIsOn || this.isStarting) {
+                return
+            }
 
-                    // Stop the permission stream immediately
-                    permissionStream.getTracks().forEach(track => track.stop())
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                this.reportError(new Error(
+                    'Camera API not available. Browsers only allow camera access over HTTPS or on localhost.'
+                ))
+                return
+            }
 
-                    // NOW enumerate devices - labels will be available after permission granted
-                    const devices = await navigator.mediaDevices.enumerateDevices()
-                    const videoDevices = devices.filter(device => device.kind === 'videoinput')
+            this.isStarting = true
+            this.errorMessage = null
+            this.statusMessage = 'Requesting camera access…'
+            // getUserMedia stays pending while the browser waits for a permission
+            // decision. Chromium often shows that prompt only as a small icon in
+            // the address bar, so tell the user where to look.
+            const slowTimer = setTimeout(() => {
+                this.statusMessage = 'Still waiting for camera access. Check for a camera permission prompt or icon in the browser address bar.'
+            }, 5000)
 
-                    if (videoDevices.length > 0) {
-                        this.cameraDevices = videoDevices
-                        this.selectedDevice = videoDevices[0].deviceId // Select the first camera by default
-                        await this.openCamera()
-                    } else {
-                        console.error('[ui-webcam] No video input devices found.')
-                    }
-                } catch (error) {
-                    console.error('[ui-webcam] Error accessing media devices:', error)
-                }
+            try {
+                // Open the camera once and keep the stream. Stopping a stream and
+                // immediately reopening the same device can fail on Linux (V4L2)
+                // because the device has not been released yet.
+                const stream = await this.acquireStream(this.selectedDevice)
+
+                // Labels are only available after permission is granted
+                const devices = await navigator.mediaDevices.enumerateDevices()
+                this.cameraDevices = devices.filter(device => device.kind === 'videoinput')
+
+                const track = stream.getVideoTracks()[0]
+                const activeId = track && track.getSettings().deviceId
+                this.selectedDevice = activeId || this.cameraDevices[0]?.deviceId || null
+
+                await this.attachStream(stream)
+            } catch (error) {
+                this.reportError(error)
+            } finally {
+                clearTimeout(slowTimer)
+                this.isStarting = false
+                this.statusMessage = null
             }
         },
         async openCamera () {
             if (this.selectedDevice === 'off') {
                 this.stopWebcam()
-                this.cameraIsOn = false
-            } else {
-                const video = this.$refs.video
-
-                // Stop existing stream before requesting new one
-                if (video && video.srcObject) {
-                    const tracks = video.srcObject.getTracks()
-                    tracks.forEach(track => track.stop())
-                    video.srcObject = null
+                return
+            }
+            const stream = await this.acquireStream(this.selectedDevice)
+            await this.attachStream(stream)
+        },
+        async acquireStream (deviceId) {
+            if (!deviceId) {
+                return navigator.mediaDevices.getUserMedia({ video: true })
+            }
+            try {
+                return await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: deviceId } } })
+            } catch (error) {
+                if (error.name !== 'OverconstrainedError' && error.name !== 'NotFoundError') {
+                    throw error
                 }
+                console.warn('[ui-webcam] Selected camera unavailable, falling back to any camera:', error)
+                return navigator.mediaDevices.getUserMedia({ video: true })
+            }
+        },
+        async attachStream (stream) {
+            const video = this.$refs.video
+            if (!(video instanceof HTMLVideoElement)) {
+                stream.getTracks().forEach(track => track.stop())
+                throw new Error('Video element not found')
+            }
 
-                // Try exact constraint first, then fallback to ideal
-                let stream = null
-                let constraints = null
+            // Release any previous stream before attaching the new one
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop())
+            }
 
-                if (this.selectedDevice) {
-                    // First attempt: exact constraint
-                    constraints = {
-                        video: {
-                            deviceId: { exact: this.selectedDevice }
-                        }
-                    }
+            const track = stream.getVideoTracks()[0]
+            if (track) {
+                // Only auto-detect on mobile devices, not desktop/USB cameras
+                const isMobile = /Android|webOS|iPhone|iPad|iPod/i.test(navigator.userAgent)
+                this.isFrontCamera = isMobile && track.getSettings().facingMode !== 'environment'
+            }
+
+            video.srcObject = stream
+            try {
+                await video.play()
+            } catch (error) {
+                stream.getTracks().forEach(track => track.stop())
+                video.srcObject = null
+                throw error
+            }
+            this.cameraIsOn = true
+            this.errorMessage = null
+
+            if (this.qrDetectionEnabled) {
+                if (video.readyState >= video.HAVE_METADATA) {
+                    this.startQRScanning()
                 } else {
-                    // No specific device selected, use any available
-                    constraints = { video: true }
-                }
-
-                try {
-                    stream = await navigator.mediaDevices.getUserMedia(constraints)
-                } catch (error) {
-                    console.error('[ui-webcam] Error accessing webcam:', error)
-
-                    // If exact constraint fails, try with ideal constraint
-                    if ((error.name === 'OverconstrainedError' || error.name === 'NotFoundError') && this.selectedDevice) {
-                        console.warn('[ui-webcam] Exact device constraint failed, trying ideal constraint')
-                        try {
-                            const idealConstraints = {
-                                video: {
-                                    deviceId: { ideal: this.selectedDevice }
-                                }
-                            }
-                            stream = await navigator.mediaDevices.getUserMedia(idealConstraints)
-                        } catch (idealError) {
-                            console.warn('[ui-webcam] Ideal constraint failed, using any available camera')
-                            // Last resort: any available camera
-                            try {
-                                stream = await navigator.mediaDevices.getUserMedia({ video: true })
-                            } catch (fallbackError) {
-                                console.error('[ui-webcam] All camera access attempts failed:', fallbackError)
-                                return
-                            }
-                        }
-                    } else {
-                        // Not a device constraint error, or no fallback possible
-                        return
-                    }
-                }
-
-                // At this point we should have a stream (from initial try or fallback)
-                if (!stream) {
-                    console.error('[ui-webcam] No stream available')
-                    return
-                }
-
-                // Check camera facing mode
-                const videoTracks = stream.getVideoTracks()
-                if (videoTracks.length > 0) {
-                    const track = videoTracks[0]
-                    const settings = track.getSettings()
-                    // Only auto-detect on mobile devices, not desktop/USB cameras
-                    const isMobile = /Android|webOS|iPhone|iPad|iPod/i.test(navigator.userAgent)
-                    this.isFrontCamera = isMobile && settings.facingMode !== 'environment'
-                }
-
-                if (video && video instanceof HTMLVideoElement) {
-                    video.srcObject = stream
-                    await video.play()
-                    this.cameraIsOn = true
-                    // Start QR scanning once video is ready (only if enabled)
-                    if (this.qrDetectionEnabled) {
-                        if (video.readyState >= video.HAVE_METADATA) {
-                            // Video is already ready, start scanning immediately
-                            this.startQRScanning()
-                        } else {
-                            // Wait for video to be ready before starting QR scanning
-                            video.addEventListener('loadedmetadata', () => {
-                                this.startQRScanning()
-                            }, { once: true })
-                        }
-                    }
-                } else {
-                    console.error('[ui-webcam] Video element not found or not an instance of HTMLVideoElement.')
-                    // Clean up stream if we can't use it
-                    if (stream) {
-                        stream.getTracks().forEach(track => track.stop())
-                    }
+                    video.addEventListener('loadedmetadata', () => {
+                        this.startQRScanning()
+                    }, { once: true })
                 }
             }
+        },
+        reportError (error) {
+            const hints = {
+                NotAllowedError: 'Camera permission was denied. Allow camera access for this site in the browser settings.',
+                SecurityError: 'Camera access is blocked. Use HTTPS or localhost.',
+                NotFoundError: 'No camera found.',
+                NotReadableError: 'The camera could not be opened. It may be in use by another application (e.g. VLC).',
+                AbortError: 'The camera could not be started. It may be in use by another application.',
+                OverconstrainedError: 'The selected camera is not available.'
+            }
+            const name = error?.name || 'Error'
+            const message = hints[name] || error?.message || String(error)
+            this.errorMessage = message
+            console.error('[ui-webcam] Error accessing camera:', error)
+            this.send({
+                error: 'Camera error',
+                type: 'camera-error',
+                name,
+                message,
+                detail: error?.message,
+                timestamp: new Date().toISOString()
+            })
         },
         stopWebcam () {
             try {
@@ -392,7 +398,7 @@ export default {
                 this.stopWebcam()
                 await this.openCamera()
             } catch (err) {
-                console.error('[ui-webcam] Error changing camera:', err)
+                this.reportError(err)
             }
         },
         toggleDropdown () {
@@ -478,6 +484,29 @@ export default {
 </script>
 
 <style scoped>
+.status-message {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    z-index: 3;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    line-height: 1.3;
+    color: #fff;
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+.status-message.is-error {
+    background-color: rgba(176, 0, 32, 0.85);
+}
+
+.button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
 .ui-webcam-wrapper {
     position: relative;
     border-radius: 5px;

@@ -28,12 +28,29 @@ module.exports = function (RED) {
 
         // server-side event handlers
         const evts = {
-            onAction: function (conn, id, msg, send, done) {
+            // Dashboard 2.0 only checks that onAction is set; it then runs beforeSend()
+            // and sends the result. All processing therefore lives in beforeSend.
+            onAction: true,
+            beforeSend: function (msg) {
+                // beforeSend also runs for messages arriving on the node's input
+                // (e.g. "on"/"off"/"capture"), which pass through untouched.
+                const payload = msg && msg.payload
+                if (!payload || typeof payload !== 'object') {
+                    return msg
+                }
+
                 try {
-                    // Check if this is an error message about API limit exceeded
-                    if (msg.payload && msg.payload.error) {
-                        const sizeInMB = (msg.payload.sizeBytes / 1000000).toFixed(2)
-                        const maxSizeMB = (msg.payload.maxSizeBytes / 1000000).toFixed(2)
+                    // Camera could not be started in the browser (permission, device busy, insecure context...)
+                    if (payload.type === 'camera-error') {
+                        node.warn(`Dashboard client could not start the camera: ${payload.message} (${payload.name})`)
+                        node.status({ fill: 'red', shape: 'ring', text: payload.name })
+                        return msg
+                    }
+
+                    // Image exceeded the socket.io maxHttpBufferSize limit
+                    if (payload.error && payload.maxSizeBytes) {
+                        const sizeInMB = (payload.sizeBytes / 1000000).toFixed(2)
+                        const maxSizeMB = (payload.maxSizeBytes / 1000000).toFixed(2)
 
                         node.warn(
                             `Image size (${sizeInMB}MB) exceeds Dashboard 2.0 maxHttpBufferSize limit (${maxSizeMB}MB). ` +
@@ -43,33 +60,26 @@ module.exports = function (RED) {
                             '(2) Lower image quality. ' +
                             'See: https://dashboard.flowfuse.com/getting-started.html#max-buffer-size'
                         )
-
-                        // Send the error message to the output so users can handle it in their flow
-                        send(msg)
-                        return
+                        return msg
                     }
 
-                    // Handle binary image data from client
-                    if (msg.payload && msg.payload.image) {
-                        if (Array.isArray(msg.payload.image)) {
-                            msg.payload.image = Buffer.from(msg.payload.image)
-                        } else if (msg.payload.image instanceof ArrayBuffer || ArrayBuffer.isView(msg.payload.image)) {
-                            msg.payload.image = Buffer.from(msg.payload.image)
+                    // Normalise binary image data from the client to a Buffer
+                    if (payload.image) {
+                        if (Array.isArray(payload.image) || payload.image instanceof ArrayBuffer || ArrayBuffer.isView(payload.image)) {
+                            payload.image = Buffer.from(payload.image)
                         }
+                        node.status({})
                     }
-                    // Send the message to the output
-                    send(msg)
+                    return msg
                 } catch (err) {
-                    // Log error but don't crash Node-RED
                     node.error('Error processing webcam message: ' + err.message, msg)
-                    // Send error message to output for flow handling
-                    send({
+                    return {
                         payload: {
                             error: 'Processing error',
                             message: err.message,
                             timestamp: new Date().toISOString()
                         }
-                    })
+                    }
                 }
             },
             onInput: function (msg, send) {
