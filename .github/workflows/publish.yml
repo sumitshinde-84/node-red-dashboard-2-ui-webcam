@@ -21,4 +21,4 @@ jobs:
       # Trusted publishing needs npm >= 11.5.1
       - run: npm install -g npm@latest
 
-      - run: npm publish --access public
+      - run: npm publish --access public --loglevel verbose
